@@ -25,6 +25,11 @@ const CLASSES = {
   },
 };
 
+// 스킬 레벨: 배운 스킬에 SP를 더 투자해 강화한다
+const MAX_SKILL_LV = 5;
+const ACTIVE_LV_BONUS = 0.12;   // 레벨당 액티브 위력 +12%
+const PASSIVE_LV_BONUS = 0.25;  // 레벨당 패시브/버프 효과 +25%
+
 // 스킬 정의
 // type: active | passive
 // kind: phys(atk 기반) | mag(mag 기반) | heal | buff

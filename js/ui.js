@@ -209,7 +209,7 @@ function showSkillSelect(u) {
     const sk = SKILLS[id];
     const btn = document.createElement('button');
     btn.className = 'skill-option' + (u.curMp < sk.mp ? ' no-mp' : '');
-    btn.innerHTML = `<span>${sk.name}</span><span class="mp-cost">MP ${sk.mp}</span>`;
+    btn.innerHTML = `<span>${sk.name} <span style="color:var(--accent);font-size:11px">Lv.${skillLevel(u.hero, id)}</span></span><span class="mp-cost">MP ${sk.mp}</span>`;
     btn.title = sk.desc;
     btn.onclick = () => {
       box.classList.add('hidden');
@@ -372,6 +372,14 @@ function renderHeroEquip() {
   }
 }
 
+// 현재 레벨 기준 효과 요약
+function skillEffectText(sk, lv) {
+  if (sk.type === 'passive') return `${STAT_NAMES[sk.stat]} +${passivePct(sk, lv)}%`;
+  if (sk.kind === 'buff') return `${STAT_NAMES[sk.buff.stat]} +${passivePct(sk.buff, lv)}% (${sk.buff.turns}턴)`;
+  const pct = Math.round(activeMult(sk, lv) * 100);
+  return sk.kind === 'heal' ? `회복량 마력의 ${pct}%` : `위력 ${pct}%${sk.hits ? ` ×${sk.hits}회` : ''}`;
+}
+
 function renderHeroTree() {
   const h = detailHero;
   const tab = $('#hero-tab-tree');
@@ -381,13 +389,15 @@ function renderHeroTree() {
     html += `<div class="tree-branch"><div class="branch-title">${branch.title}</div>`;
     branch.nodes.forEach((id, i) => {
       const sk = SKILLS[id];
-      const learned = !!h.learned[id];
+      const lv = skillLevel(h, id);
+      const learned = lv >= 1;
       const learnable = canLearn(h, id);
+      const upgradable = canUpgrade(h, id);
       const locked = !learned && !learnable;
       html += `${i > 0 ? '<div class="tree-arrow">▼</div>' : ''}
-        <div class="tree-node ${learned ? 'learned' : ''} ${learnable ? 'learnable' : ''} ${locked ? 'locked' : ''}" data-skill="${id}">
-          <div class="sk-name">${sk.name}</div>
-          <div class="sk-desc">${sk.desc}</div>
+        <div class="tree-node ${learned ? 'learned' : ''} ${learnable ? 'learnable' : ''} ${upgradable ? 'upgradable' : ''} ${locked ? 'locked' : ''}" data-skill="${id}">
+          <div class="sk-name">${sk.name}${learned ? ` <span class="lv-badge">Lv.${lv}/${MAX_SKILL_LV}</span>` : ''}</div>
+          <div class="sk-desc">${learned ? skillEffectText(sk, lv) : sk.desc}</div>
           <div class="sk-type">${sk.type === 'active' ? `액티브 · MP ${sk.mp}` : '패시브'}</div>
         </div>`;
     });
@@ -408,6 +418,23 @@ function renderHeroTree() {
         <button class="btn" id="modal-cancel">취소</button>
       `);
       $('#modal-confirm').onclick = () => { learnSkill(detailHero, id); hideModal(); renderHeroDetail(); };
+      $('#modal-cancel').onclick = hideModal;
+    };
+  });
+
+  tab.querySelectorAll('.tree-node.upgradable').forEach(node => {
+    node.onclick = () => {
+      const id = node.dataset.skill;
+      const sk = SKILLS[id];
+      const lv = skillLevel(detailHero, id);
+      showModal(`
+        <h3>${sk.name} 강화 (Lv.${lv} → ${lv + 1})</h3>
+        <p>현재: ${skillEffectText(sk, lv)}<br>강화 후: <span style="color:var(--xp)">${skillEffectText(sk, lv + 1)}</span></p>
+        <p style="color:var(--accent)">스킬 포인트 1 사용</p>
+        <button class="btn btn-primary" id="modal-confirm">강화한다</button>
+        <button class="btn" id="modal-cancel">취소</button>
+      `);
+      $('#modal-confirm').onclick = () => { upgradeSkill(detailHero, id); hideModal(); renderHeroDetail(); };
       $('#modal-cancel').onclick = hideModal;
     };
   });

@@ -47,15 +47,25 @@ function heroStats(h) {
     if (!it) continue;
     for (const k in it.stats) s[k] += it.stats[k];
   }
-  // 패시브 스킬 (%)
+  // 패시브 스킬 (%) — 레벨 비례 강화
   for (const skId in h.learned) {
     const sk = SKILLS[skId];
     if (sk.type === 'passive') {
-      s[sk.stat] = Math.round(s[sk.stat] * (1 + sk.pct / 100));
+      s[sk.stat] = Math.round(s[sk.stat] * (1 + passivePct(sk, skillLevel(h, skId)) / 100));
     }
   }
   return s;
 }
+
+// 스킬 레벨 (구버전 세이브의 true는 1로 취급)
+function skillLevel(h, skillId) {
+  const v = h.learned[skillId];
+  return v === true ? 1 : (v || 0);
+}
+
+// 레벨 반영 수치
+function passivePct(sk, lv) { return Math.round(sk.pct * (1 + PASSIVE_LV_BONUS * (Math.max(lv, 1) - 1))); }
+function activeMult(sk, lv) { return sk.mult * (1 + ACTIVE_LV_BONUS * (Math.max(lv, 1) - 1)); }
 
 function xpNeeded(level) {
   return Math.round(80 * level * Math.pow(1.15, level - 1));
@@ -92,12 +102,26 @@ function canLearn(h, skillId) {
 
 function learnSkill(h, skillId) {
   if (!canLearn(h, skillId)) return false;
-  h.learned[skillId] = true;
+  h.learned[skillId] = 1;
   h.skillPoints -= 1;
   // 패시브로 최대치가 오르면 현재치도 비례 유지
   const s = heroStats(h);
   h.curHp = Math.min(h.curHp, s.hp);
   h.curMp = Math.min(h.curMp, s.mp);
+  saveGame();
+  return true;
+}
+
+// 배운 스킬 강화
+function canUpgrade(h, skillId) {
+  const lv = skillLevel(h, skillId);
+  return lv >= 1 && lv < MAX_SKILL_LV && h.skillPoints >= 1;
+}
+
+function upgradeSkill(h, skillId) {
+  if (!canUpgrade(h, skillId)) return false;
+  h.learned[skillId] = skillLevel(h, skillId) + 1;
+  h.skillPoints -= 1;
   saveGame();
   return true;
 }

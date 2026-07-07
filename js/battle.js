@@ -177,29 +177,32 @@ function heroPotion(u) {
 
 function heroSkill(u, skillId, target) {
   const sk = SKILLS[skillId];
+  const lv = skillLevel(u.hero, skillId);
   u.curMp -= sk.mp;
 
   if (sk.kind === 'heal') {
     const targets = sk.target === 'all-allies' ? aliveUnits('hero') : [target];
     for (const t of targets) {
-      const heal = Math.round(effStat(u, 'mag') * sk.mult);
+      const heal = Math.round(effStat(u, 'mag') * activeMult(sk, lv));
       t.curHp = Math.min(t.stats.hp, t.curHp + heal);
       uiFloater(t, `+${heal}`, 'heal');
-      logLine(`✨ ${u.name}의 ${sk.name}! ${t.name} ${heal} 회복`, 'heal');
+      logLine(`✨ ${u.name}의 ${sk.name} Lv.${lv}! ${t.name} ${heal} 회복`, 'heal');
     }
   } else if (sk.kind === 'buff') {
+    const pct = passivePct(sk.buff, lv);
     const targets = sk.target === 'all-allies' ? aliveUnits('hero') : [target];
     for (const t of targets) {
-      t.buffs.push({ ...sk.buff });
+      t.buffs.push({ ...sk.buff, pct });
     }
-    logLine(`✨ ${u.name}의 ${sk.name}! 아군 ${STAT_NAMES[sk.buff.stat]} +${sk.buff.pct}% (${sk.buff.turns}턴)`, 'sys');
+    logLine(`✨ ${u.name}의 ${sk.name} Lv.${lv}! 아군 ${STAT_NAMES[sk.buff.stat]} +${pct}% (${sk.buff.turns}턴)`, 'sys');
   } else {
     const targets = sk.target === 'all-enemies' ? aliveUnits('enemy') : [target];
     const hits = sk.hits || 1;
+    const dot = sk.dot ? { ...sk.dot, pct: sk.dot.pct * (1 + ACTIVE_LV_BONUS * (lv - 1)) } : undefined;
     for (const t of targets) {
       for (let i = 0; i < hits; i++) {
         if (t.curHp <= 0) break;
-        applyDamage(u, t, sk.mult, sk.kind, { critBonus: sk.critBonus || 0, dot: sk.dot });
+        applyDamage(u, t, activeMult(sk, lv), sk.kind, { critBonus: sk.critBonus || 0, dot });
       }
     }
   }

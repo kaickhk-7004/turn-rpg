@@ -273,6 +273,9 @@ body {
 .tree-node.learned::after { content: '✓'; position: absolute; top: 6px; right: 8px; color: var(--xp); font-weight: 800; }
 .tree-node.locked { opacity: 0.45; }
 .tree-node.learnable { border-color: var(--accent); animation: pulse 1.2s infinite; }
+.tree-node.upgradable { border-color: var(--accent); }
+.tree-node.upgradable::after { content: '▲'; position: absolute; top: 6px; right: 8px; color: var(--accent); font-size: 11px; animation: pulse 1.2s infinite; }
+.lv-badge { color: var(--accent); font-size: 10px; font-weight: 800; }
 .tree-arrow { text-align: center; color: var(--border); font-size: 12px; }
 
 /* ── 가방 ── */
