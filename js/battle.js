@@ -12,7 +12,7 @@ function makeEnemyUnit(def, floor, isBoss) {
   const m = floorMult(floor);
   return {
     side: 'enemy', isBoss,
-    name: def.name, emoji: def.emoji,
+    name: def.name, emoji: def.emoji, sprite: def.sprite,
     stats: {
       hp: Math.round(def.hp * m),
       atk: Math.round(def.atk * m),
@@ -47,7 +47,7 @@ function buildEnemies(floor) {
 function makeHeroUnit(h) {
   return {
     side: 'hero', hero: h,
-    name: CLASSES[h.clsId].name, cls: CLASSES[h.clsId].cls, emoji: CLASSES[h.clsId].emoji,
+    name: CLASSES[h.clsId].name, cls: CLASSES[h.clsId].cls, emoji: CLASSES[h.clsId].emoji, sprite: CLASSES[h.clsId].sprite,
     stats: heroStats(h),
     curHp: h.curHp, curMp: h.curMp,
     buffs: [], dots: [], defending: false,

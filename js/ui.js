@@ -8,6 +8,14 @@ const $$ = sel => document.querySelectorAll(sel);
 let pendingAction = null; // { unit, type: 'attack'|'skill', skillId }
 let detailHero = null;    // 상세 화면에 표시 중인 영웅
 
+// 스프라이트가 있으면 픽셀아트 이미지, 없으면 이모지로
+function iconHTML(obj, size) {
+  if (obj && obj.sprite) {
+    return `<img class="sprite" src="assets/sprites/${obj.sprite}.png" width="${size}" height="${size}" alt="">`;
+  }
+  return `<span style="font-size:${Math.round(size * 0.85)}px">${obj ? obj.emoji : ''}</span>`;
+}
+
 // ── 화면 전환 ──
 function showScreen(id) {
   $$('.screen').forEach(s => s.classList.remove('active'));
@@ -53,7 +61,7 @@ function renderMain() {
     const div = document.createElement('div');
     div.className = 'strip-hero';
     div.innerHTML = `
-      <div class="emoji">${c.emoji}</div>
+      <div class="emoji">${iconHTML(c, 32)}</div>
       <div class="name">${c.name}</div>
       <div class="lv">Lv.${h.level}</div>
       <div class="bar bar-hp"><div class="bar-fill" style="width:${(h.curHp / s.hp) * 100}%"></div></div>
@@ -84,7 +92,7 @@ function uiBattleRender() {
     div.className = 'enemy-card' + (u.isBoss ? ' boss' : '') + (u.curHp <= 0 ? ' dead' : '');
     div.dataset.enemyIdx = i;
     div.innerHTML = `
-      <div class="emoji">${u.emoji}</div>
+      <div class="emoji">${iconHTML(u, u.isBoss ? 72 : 44)}</div>
       <div class="name">${u.name}</div>
       <div class="bar bar-hp"><div class="bar-fill" style="width:${(u.curHp / u.stats.hp) * 100}%"></div></div>
       <div class="hp-num">${u.curHp}/${u.stats.hp}</div>
@@ -101,7 +109,7 @@ function uiBattleRender() {
     div.className = 'hero-card' + (u.curHp <= 0 ? ' dead' : '');
     div.dataset.heroIdx = i;
     div.innerHTML = `
-      <div class="emoji">${u.emoji}</div>
+      <div class="emoji">${iconHTML(u, 30)}</div>
       <div class="info">
         <div class="name">${u.name} <span style="color:var(--text-dim)">Lv.${u.hero.level}</span></div>
         <div class="bar bar-hp"><div class="bar-fill" style="width:${(u.curHp / u.stats.hp) * 100}%"></div></div>
@@ -153,7 +161,7 @@ function uiShowActionBar(u) {
   if (u.el) u.el.classList.add('active-turn');
   pendingAction = null;
   $('#action-bar').classList.remove('hidden');
-  $('#action-hero-name').textContent = `${u.emoji} ${u.name}의 턴`;
+  $('#action-hero-name').innerHTML = `${iconHTML(u, 18)} ${u.name}의 턴`;
   $('#skill-select').classList.add('hidden');
   $('#target-hint').classList.add('hidden');
 
@@ -268,7 +276,7 @@ function uiShowResult(won, data) {
     }
     if (data.drop) {
       html += `<div class="reward-line rb-${data.drop.rarity}" style="padding-left:8px">
-        ${data.drop.emoji} <span class="r-${data.drop.rarity}">[${data.drop.rarityName}] ${data.drop.name}</span><br>
+        ${iconHTML(data.drop, 24)} <span class="r-${data.drop.rarity}">[${data.drop.rarityName}] ${data.drop.name}</span><br>
         <span style="font-size:12px;color:var(--text-dim)">${itemStatText(data.drop)}</span>
       </div>`;
     }
@@ -294,7 +302,7 @@ function renderParty() {
     const row = document.createElement('div');
     row.className = 'party-row';
     row.innerHTML = `
-      <div class="emoji">${c.emoji}</div>
+      <div class="emoji">${iconHTML(c, 40)}</div>
       <div class="info">
         <div class="name">${c.name} <span class="cls">${c.cls}</span>
           ${h.skillPoints > 0 ? `<span class="sp-badge">SP ${h.skillPoints}</span>` : ''}
@@ -313,7 +321,7 @@ function renderParty() {
 function renderHeroDetail() {
   const h = detailHero;
   const c = CLASSES[h.clsId];
-  $('#hero-detail-name').textContent = `${c.emoji} ${c.name} · ${c.cls} Lv.${h.level}`;
+  $('#hero-detail-name').innerHTML = `${iconHTML(c, 20)} ${c.name} · ${c.cls} Lv.${h.level}`;
   renderHeroStats();
   renderHeroEquip();
   renderHeroTree();
@@ -351,7 +359,7 @@ function renderHeroEquip() {
     if (it) {
       div.innerHTML = `
         <span class="slot-name">${slotNames[slot]}</span>
-        <span style="font-size:22px">${it.emoji}</span>
+        ${iconHTML(it, 28)}
         <div style="flex:1">
           <div class="item-name r-${it.rarity}">[${it.rarityName}] ${it.name}</div>
           <div class="item-stats">${itemStatText(it)}</div>
@@ -430,7 +438,7 @@ function renderBag() {
     const div = document.createElement('div');
     div.className = `bag-item rb-${it.rarity}`;
     div.innerHTML = `
-      <span style="font-size:24px">${it.emoji}</span>
+      ${iconHTML(it, 30)}
       <div class="item-info">
         <div class="item-name r-${it.rarity}">[${it.rarityName}] ${it.name}</div>
         <div class="item-stats">${itemStatText(it)}</div>
@@ -449,13 +457,13 @@ function renderBag() {
 
 function chooseEquipHero(item) {
   const slotNames = { weapon: '무기', armor: '방어구', accessory: '장신구' };
-  let html = `<h3>${item.emoji} 누가 장착할까요?</h3>
+  let html = `<h3>${iconHTML(item, 24)} 누가 장착할까요?</h3>
     <p class="r-${item.rarity}">[${item.rarityName}] ${item.name}</p>
     <p>${itemStatText(item)} · ${slotNames[item.slot]}</p>`;
   G.heroes.forEach((h, i) => {
     const c = CLASSES[h.clsId];
     const cur = h.equip[item.slot];
-    html += `<button class="btn" data-hero="${i}">${c.emoji} ${c.name}
+    html += `<button class="btn" data-hero="${i}">${iconHTML(c, 20)} ${c.name}
       <span style="font-size:11px;color:var(--text-dim)">${cur ? `(현재: ${cur.name})` : '(비어 있음)'}</span>
     </button>`;
   });

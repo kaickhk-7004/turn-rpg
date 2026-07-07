@@ -139,7 +139,7 @@ function makeItem(floor, bonusWeight = 0) {
 
   return {
     id: Date.now() + '-' + Math.floor(Math.random() * 1e6),
-    name, slot, emoji: base.emoji,
+    name, slot, emoji: base.emoji, sprite: base.sprite,
     rarity: rarity.id, rarityName: rarity.name,
     stats, sell: rarity.sell + floor * 5,
   };
